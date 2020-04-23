@@ -1,11 +1,15 @@
 package com.example.myartbook
 
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.MediaStore.Images.Media.getBitmap
 import android.view.View
+import kotlinx.android.synthetic.main.activity_main2.*
+import java.lang.Exception
 import java.util.jar.Manifest
 
 class Main2Activity : AppCompatActivity() {
@@ -33,7 +37,7 @@ class Main2Activity : AppCompatActivity() {
     ) {
 
         if(requestCode==2){
-            if(grantResults.size>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+            if(grantResults.isNotEmpty() && grantResults[0]==PackageManager.PERMISSION_GRANTED){
                 val intent=Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                 startActivityForResult(intent,1)
             }
@@ -42,8 +46,22 @@ class Main2Activity : AppCompatActivity() {
     }
 
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
-    
+        if(requestCode==1 && resultCode==Activity.RESULT_OK && data!=null){
+            val image=data.data
+
+            try{
+                val selectedImage=MediaStore.Images.Media.getBitmap(this.contentResolver,image)
+                imageView.setImageBitmap(selectedImage)
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
+
     fun save(view: View){
 
     }
