@@ -1,18 +1,24 @@
 package com.example.myartbook
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.MediaStore.Images.Media.getBitmap
 import android.view.View
 import kotlinx.android.synthetic.main.activity_main2.*
+import java.io.ByteArrayOutputStream
 import java.lang.Exception
 import java.util.jar.Manifest
 
 class Main2Activity : AppCompatActivity() {
+
+    var selectedImage:Bitmap?=null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,5 +70,25 @@ class Main2Activity : AppCompatActivity() {
 
     fun save(view: View){
 
+        val artName=editText.text.toString()
+        val outputStream=ByteArrayOutputStream()
+        selectedImage?.compress(Bitmap.CompressFormat.PNG,50,outputStream)
+        val byteArray=outputStream.toByteArray()
+
+        try{
+            val database=this.openOrCreateDatabase("Arts", Context.MODE_PRIVATE,null)
+            database.execSQL("CREATE TABLE IF NOT EXISTS arts(name VARCHAR, image BLOB)")
+
+            val sqlString="INSERT INTO arts(name,image) VALUES(?,?)"
+            val statement=database.compileStatement(sqlString)
+
+            statement.bindString(1,artName)
+            statement.bindBlob(2,byteArray)
+            statement.execute()
+        }catch(e:Exception){
+            e.printStackTrace()
+        }
+        val intent=Intent(applicationContext,MainActivity::class.java)
+        startActivity(intent)
     }
 }
