@@ -22,10 +22,28 @@ class Main2Activity : AppCompatActivity() {
         else{
             val intent=Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             startActivityForResult(intent,1)
-
         }
     }
 
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        if(requestCode==2){
+            if(grantResults.size>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                val intent=Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                startActivityForResult(intent,1)
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+
+
+    
     fun save(view: View){
 
     }
