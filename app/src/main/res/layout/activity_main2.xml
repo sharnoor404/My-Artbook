@@ -7,7 +7,7 @@
     tools:context=".Main2Activity">
 
     <EditText
-        android:id="@+id/editText"
+        android:id="@+id/artText"
         android:layout_width="263dp"
         android:layout_height="61dp"
         android:layout_marginStart="94dp"
@@ -33,7 +33,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editText"
+        app:layout_constraintTop_toBottomOf="@+id/artText"
         app:srcCompat="@drawable/choose_img" />
 
     <Button

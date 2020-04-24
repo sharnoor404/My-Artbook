@@ -1,118 +1,146 @@
 package com.example.myartbook
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.provider.MediaStore.Images.Media.getBitmap
 import android.view.View
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main2.*
 import java.io.ByteArrayOutputStream
 import java.lang.Exception
-import java.util.jar.Manifest
 
 class Main2Activity : AppCompatActivity() {
 
-    var selectedImage:Bitmap?=null
-
+    var selectedPicture : Uri? = null
+    var selectedBitmap : Bitmap? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
 
+        val intent = intent
 
-        val intent=intent
-        val info=intent.getStringExtra("info")
-        if(info.equals("new"))
-        {
-            val background=BitmapFactory.decodeResource(applicationContext.resources,R.drawable.choose_img)
-            imageView.setImageBitmap(background)
-            button.visibility=View.VISIBLE
-            editText.setText("")
+        val info = intent.getStringExtra("info")
 
-
-        }else{
-            val name=intent.getStringExtra("name")
-            editText.setText(name)
-
-            val chosen=Globals.Chosen
-            val bitmap=chosen.returnImage()
-            imageView.setImageBitmap(bitmap)
-
-            button.visibility=View.INVISIBLE
-
-        }
-    }
-
-    fun select(view:View){
-        if(checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
-            requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),2)
+        if (info.equals("new")) {
+            val selectedImageBackground = BitmapFactory.decodeResource(applicationContext.resources,R.drawable.choose_img)
+            imageView.setImageBitmap(selectedImageBackground)
+            button.visibility = View.VISIBLE
+            artText.setText("")
         }
         else{
-            val intent=Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(intent,1)
+            val name = intent.getStringExtra("name")
+            artText.setText(name)
+            val chosen = Globals.Chosen
+            val bitmap = chosen.returnImage()
+            imageView.setImageBitmap(bitmap)
+            button.visibility = View.INVISIBLE
         }
+
     }
 
+    fun select(view: View) {
+
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),1)
+        } else {
+            val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            startActivityForResult(intentToGallery,2)
+        }
+
+    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        if (requestCode == 1) {
 
-        if(requestCode==2){
-            if(grantResults.isNotEmpty() && grantResults[0]==PackageManager.PERMISSION_GRANTED){
-                val intent=Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                startActivityForResult(intent,1)
+            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                startActivityForResult(intentToGallery,2)
             }
+
         }
+
+
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
-        if(requestCode==1 && resultCode==Activity.RESULT_OK && data!=null){
-            val image=data.data
+        if ( requestCode == 2 && resultCode == Activity.RESULT_OK && data != null) {
 
-            try{
-                val selectedImage=MediaStore.Images.Media.getBitmap(this.contentResolver,image)
-                imageView.setImageBitmap(selectedImage)
-            }catch (e:Exception){
-                e.printStackTrace()
+            selectedPicture = data.data
+
+            try {
+
+                if (selectedPicture != null) {
+
+                    if (Build.VERSION.SDK_INT >= 28) {
+                        val source =
+                            ImageDecoder.createSource(this.contentResolver, selectedPicture!!)
+                        selectedBitmap = ImageDecoder.decodeBitmap(source)
+                        imageView.setImageBitmap(selectedBitmap)
+                    } else {
+                        selectedBitmap =
+                            MediaStore.Images.Media.getBitmap(this.contentResolver, selectedPicture)
+                        imageView.setImageBitmap(selectedBitmap)
+                    }
+                }
+            } catch (e: Exception) {
+
             }
+
         }
+
+
         super.onActivityResult(requestCode, resultCode, data)
     }
 
+    fun save(view: View)
+    {
+        val artName = artText.text.toString()
+        val outputStream = ByteArrayOutputStream()
+        selectedBitmap?.compress(Bitmap.CompressFormat.PNG,50,outputStream)
+        val byteArray = outputStream.toByteArray()
 
-    fun save(view: View){
+        try {
 
-        val artName=editText.text.toString()
-        val outputStream=ByteArrayOutputStream()
-        selectedImage?.compress(Bitmap.CompressFormat.PNG,50,outputStream)
-        val byteArray=outputStream.toByteArray()
+            val database = this.openOrCreateDatabase("Arts", Context.MODE_PRIVATE, null)
+            database.execSQL("CREATE TABLE IF NOT EXISTS arts (artname VARCHAR, image BLOB)")
 
-        try{
-            val database=this.openOrCreateDatabase("Arts", Context.MODE_PRIVATE,null)
-            database.execSQL("CREATE TABLE IF NOT EXISTS arts(name VARCHAR, image BLOB)")
+            val sqlString =
+                "INSERT INTO arts (artname,image) VALUES (?, ?)"
+            val statement = database.compileStatement(sqlString)
+            statement.bindString(1, artName)
+            statement.bindBlob(2, byteArray)
 
-            val sqlString="INSERT INTO arts(name,image) VALUES(?,?)"
-            val statement=database.compileStatement(sqlString)
-
-            statement.bindString(1,artName)
-            statement.bindBlob(2,byteArray)
             statement.execute()
-        }catch(e:Exception){
+
+        } catch (e: Exception) {
             e.printStackTrace()
         }
-        val intent=Intent(applicationContext,MainActivity::class.java)
+
+
+        val intent = Intent(this,MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
         startActivity(intent)
+
     }
+
 }

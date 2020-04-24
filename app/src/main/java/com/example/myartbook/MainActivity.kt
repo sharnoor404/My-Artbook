@@ -19,43 +19,47 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val artNameArray=ArrayList<String>()
-        val artImageArray=ArrayList<Bitmap>()
+        val artNameList = ArrayList<String>()
+        val artImageList = ArrayList<Bitmap>()
 
-        val arrayAdapter=ArrayAdapter(this,android.R.layout.simple_list_item_1,artNameArray)
-        listView.adapter=arrayAdapter
+        val arrayAdapter = ArrayAdapter(this,android.R.layout.simple_list_item_1,artNameList)
+        listView.adapter = arrayAdapter
 
         try {
-            val database=this.openOrCreateDatabase("Arts", Context.MODE_PRIVATE,null)
-            database.execSQL("CREATE TABLE IF NOT EXISTS arts(name VARCHAR,image BLOB)")
 
-            val cursor=database.rawQuery("SELECT * FROM arts",null)
-            val nameIndex=cursor.getColumnIndex("name")
-            val imageIndex=cursor.getColumnIndex("image")
+            val database = this.openOrCreateDatabase("Arts", Context.MODE_PRIVATE,null)
+
+            val cursor = database.rawQuery("SELECT * FROM arts",null)
+            val artNameIx = cursor.getColumnIndex("artname")
+            val imageIx = cursor.getColumnIndex("image")
 
             cursor.moveToFirst()
-            while(cursor!=null){
-                artNameArray.add(cursor.getString(nameIndex))
-                val byteArray=cursor.getBlob(imageIndex)
-                val image=BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
-                artImageArray.add(image)
-                cursor.moveToNext()
 
+            while (cursor!=null) {
+                artNameList.add(cursor.getString(artNameIx))
+                val byteArray = cursor.getBlob(imageIx)
+                val image = BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                artImageList.add(image)
+                cursor.moveToNext()
+                arrayAdapter.notifyDataSetChanged()
             }
+
+
             cursor?.close()
 
 
-        }catch(e:Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        listView.onItemClickListener=AdapterView.OnItemClickListener { parent, view, position, id ->
-            val intent=Intent(applicationContext,Main2Activity::class.java)
-            intent.putExtra("name",artNameArray[position])
+        listView.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
+            val intent = Intent(this,Main2Activity::class.java)
+            intent.putExtra("name",artNameList[position])
             intent.putExtra("info","old")
 
-            val chosen=Globals.Chosen
-            chosen.chosenImage=artImageArray[position]
+            val chosen = Globals.Chosen
+            chosen.chosenImage = artImageList[position]
+
             startActivity(intent)
         }
 
@@ -63,17 +67,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
 
-        val menuInflater=menuInflater
+        //Inflater
+        val menuInflater = menuInflater
         menuInflater.inflate(R.menu.add_art,menu)
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item?.itemId==R.id.add_art){
-            val intent=Intent(applicationContext,Main2Activity::class.java)
+
+        if (item.itemId == R.id.add_art_item) {
+            val intent = Intent(this,Main2Activity::class.java)
             intent.putExtra("info","new")
             startActivity(intent)
         }
+
         return super.onOptionsItemSelected(item)
     }
+
 }
