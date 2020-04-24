@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.Exception
@@ -47,6 +48,17 @@ class MainActivity : AppCompatActivity() {
         }catch(e:Exception){
             e.printStackTrace()
         }
+
+        listView.onItemClickListener=AdapterView.OnItemClickListener { parent, view, position, id ->
+            val intent=Intent(applicationContext,Main2Activity::class.java)
+            intent.putExtra("name",artNameArray[position])
+            intent.putExtra("info","old")
+
+            val chosen=Globals.Chosen
+            chosen.chosenImage=artImageArray[position]
+            startActivity(intent)
+        }
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -59,6 +71,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item?.itemId==R.id.add_art){
             val intent=Intent(applicationContext,Main2Activity::class.java)
+            intent.putExtra("info","new")
             startActivity(intent)
         }
         return super.onOptionsItemSelected(item)

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -23,6 +24,29 @@ class Main2Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
+
+
+        val intent=intent
+        val info=intent.getStringExtra("info")
+        if(info.equals("new"))
+        {
+            val background=BitmapFactory.decodeResource(applicationContext.resources,R.drawable.choose_img)
+            imageView.setImageBitmap(background)
+            button.visibility=View.VISIBLE
+            editText.setText("")
+
+
+        }else{
+            val name=intent.getStringExtra("name")
+            editText.setText(name)
+
+            val chosen=Globals.Chosen
+            val bitmap=chosen.returnImage()
+            imageView.setImageBitmap(bitmap)
+
+            button.visibility=View.INVISIBLE
+
+        }
     }
 
     fun select(view:View){
