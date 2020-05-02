@@ -1,0 +1,1 @@
+An android application that stores images and their corresponding details in the database and retrieves them according to users choice.
